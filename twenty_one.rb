@@ -1,11 +1,25 @@
 module Hand
 end
 
-class Player
+class Participant
+  attr_accessor :hand
+
   def initialize
-    # what would the "data" or "states" of a Player object entail?
-    # maybe cards? a name?
+    @hand = []
   end
+
+  def <<(cards)
+    hand.concat(cards)
+  end
+
+  # what goes in here? all the redundant behaviors from Player and Dealer?
+end
+
+class Player < Participant
+  # def initialize
+  # what would the "data" or "states" of a Player object entail?
+  # maybe cards? a name?
+  # end
 
   def hit; end
 
@@ -18,10 +32,10 @@ class Player
   end
 end
 
-class Dealer
-  def initialize
-    # seems like very similar to Player... do we even need this?
-  end
+class Dealer < Participant
+  # def initialize
+  # seems like very similar to Player... do we even need this?
+  # end
 
   def deal
     # does the dealer or the deck deal?
@@ -34,10 +48,6 @@ class Dealer
   def busted?; end
 
   def total; end
-end
-
-class Participant
-  # what goes in here? all the redundant behaviors from Player and Dealer?
 end
 
 class Deck
@@ -92,8 +102,13 @@ class Card
 end
 
 class Game
+  attr_accessor :player, :dealer
+  attr_reader :deck
+
   def initialize
     @deck = Deck.new
+    @player = Player.new
+    @dealer = Dealer.new
   end
 
   def start
@@ -103,6 +118,12 @@ class Game
     dealer_turn
     show_result
   end
+
+  private
+
+  def deal_cards
+    [player, dealer].each { |participant| participant << deck.cards.shift(2) }
+  end
 end
 
-# Game.new.start
+Game.new.start
