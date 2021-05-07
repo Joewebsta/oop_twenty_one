@@ -1,4 +1,11 @@
 module Hand
+  def hit; end
+
+  def stay; end
+
+  def busted?; end
+
+  def total; end
 end
 
 class Participant
@@ -12,42 +19,26 @@ class Participant
     hand.concat(cards)
   end
 
-  # what goes in here? all the redundant behaviors from Player and Dealer?
+  def card_names
+    hand.map(&:name)
+  end
 end
 
 class Player < Participant
-  # def initialize
-  # what would the "data" or "states" of a Player object entail?
-  # maybe cards? a name?
-  # end
-
-  def hit; end
-
-  def stay; end
-
-  def busted?; end
-
-  def total
-    # definitely looks like we need to know about "cards" to produce some total
+  def display_hand
+    names = card_names
+    names[-1] = "and #{names[-1]}"
+    names.join(' ')
   end
 end
 
 class Dealer < Participant
-  # def initialize
-  # seems like very similar to Player... do we even need this?
-  # end
-
-  def deal
-    # does the dealer or the deck deal?
+  def display_hand(options = { unknown: false })
+    names = card_names
+    ending = options[:unknown] ? "and an unknown card" : "and #{names[-1]}"
+    names[-1] = ending
+    names.join(' ')
   end
-
-  def hit; end
-
-  def stay; end
-
-  def busted?; end
-
-  def total; end
 end
 
 class Deck
@@ -93,6 +84,8 @@ class Deck
 end
 
 class Card
+  attr_reader :name
+
   def initialize(suit, value, name)
     @suit = suit
     # HOW DOES ACE AFFECT THE VALUE?
@@ -114,15 +107,20 @@ class Game
   def start
     deal_cards
     show_initial_cards
-    player_turn
-    dealer_turn
-    show_result
+    # player_turn
+    # dealer_turn
+    # show_result
   end
 
   private
 
   def deal_cards
     [player, dealer].each { |participant| participant << deck.cards.shift(2) }
+  end
+
+  def show_initial_cards
+    puts "Dealer has: #{dealer.display_hand(unknown: true)}."
+    puts "You have: #{player.display_hand}."
   end
 end
 
