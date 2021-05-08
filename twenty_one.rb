@@ -1,11 +1,17 @@
 module Hand
   ACE_VALUE = 11
 
-  def hit; end
+  def hit(deck)
+    hand << deck.cards.shift
+  end
 
-  def stay; end
+  # def stay
+  #   break
+  # end
 
-  def busted?; end
+  def busted?
+    total > 21
+  end
 
   def total
     ace_count = card_values.count(ACE_VALUE)
@@ -31,7 +37,8 @@ class Participant
   end
 
   def <<(cards)
-    hand.concat(cards)
+    hand << cards
+    hand.flatten!
   end
 
   private
@@ -53,6 +60,10 @@ class Player < Participant
     when 2 then names.join(' and ')
     else "#{names[0..-2].join(', ')} and #{names[-1]}"
     end
+  end
+
+  def turn
+    turn_prompt
   end
 end
 
@@ -132,7 +143,7 @@ class Game
   def start
     deal_cards
     show_initial_cards
-    # player_turn
+    player_turn
     # dealer_turn
     # show_result
   end
@@ -147,6 +158,37 @@ class Game
 
   def show_initial_cards
     puts "Dealer has: #{dealer.display_hand(unknown: true)}."
+    puts "You have: #{player.display_hand}. Total: #{player.total}."
+  end
+
+  def player_turn
+    loop do
+      break if hit_or_stay == :stay
+
+      hit_and_display_result
+
+      if player.busted?
+        puts "You busted! The dealer wins."
+        break
+      end
+    end
+  end
+
+  def hit_or_stay
+    puts 'Hit(h) or stay(s)?'
+
+    action = nil
+    loop do
+      action = gets.chomp.downcase
+      break if %w(h hit s stay).include?(action)
+      puts "Sorry that is an invalid answer. Please try again."
+    end
+
+    action.start_with?('s') ? :stay : :hit
+  end
+
+  def hit_and_display_result
+    player.hit(deck)
     puts "You have: #{player.display_hand}. Total: #{player.total}."
   end
 end
