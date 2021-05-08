@@ -144,8 +144,8 @@ class Game
     deal_cards
     show_initial_cards
     player_turn
-    # dealer_turn
-    # show_result
+    dealer_turn
+    show_result unless dealer.busted?
   end
 
   private
@@ -190,6 +190,46 @@ class Game
   def hit_and_display_result
     player.hit(deck)
     puts "You have: #{player.display_hand}. Total: #{player.total}."
+  end
+
+  def dealer_turn
+    return if player.busted?
+
+    if dealer.total >= 17
+      puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+      puts "The dealer choses to stay."
+      return
+    end
+
+    puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+    puts "Press 'enter' to see dealer's next action."
+    gets.chomp
+
+    loop do
+      puts "The dealer choses to hit."
+      dealer.hit(deck)
+
+      if dealer.busted?
+        puts "The dealer busted! You win!"
+        break
+      end
+
+      if dealer.total >= 17
+        puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+        puts "The dealer choses to stay."
+        break
+      end
+
+      puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+      puts "Press 'enter' to see dealer's next action."
+      gets.chomp
+    end
+  end
+
+  def show_result
+    puts "RESULTS!"
+    puts "You have: #{player.display_hand}. Total: #{player.total}."
+    puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
   end
 end
 
