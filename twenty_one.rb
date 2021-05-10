@@ -54,6 +54,12 @@ class Player < Participant
     join_and(card_names)
   end
 
+  def display_hand_and_total
+    puts "You have: #{display_hand}. Total: #{total}."
+  end
+
+  private
+
   def join_and(names)
     if names.size == 2
       names.join(' and ')
@@ -61,16 +67,22 @@ class Player < Participant
       "#{names[0..-2].join(', ')} and #{names[-1]}"
     end
   end
-
-  def turn
-    turn_prompt
-  end
 end
 
 class Dealer < Participant
   def display_hand(options = { unknown: false })
     join_and(card_names, options[:unknown])
   end
+
+  def display_hand_and_total
+    puts "Dealer has: #{display_hand}. Total: #{total}."
+  end
+
+  def display_hand_unknown_and_total
+    puts "Dealer has: #{display_hand(unknown: true)}."
+  end
+
+  private
 
   def join_and(names, unknown)
     if unknown
@@ -158,23 +170,15 @@ class Game
   end
 
   def show_initial_cards
-    puts "Dealer has: #{dealer.display_hand(unknown: true)}."
-    show_player_hand_and_total
-  end
-
-  def show_player_hand_and_total
-    puts "You have: #{player.display_hand}. Total: #{player.total}."
-  end
-
-  def show_dealer_hand_and_total
-    puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+    dealer.display_hand_unknown_and_total
+    player.display_hand_and_total
   end
 
   def player_turn
     loop do
       break if hit_or_stay == :stay
 
-      hit_and_display_result
+      hit_and_show_hand
 
       if player.busted?
         puts "You busted! The dealer wins."
@@ -196,21 +200,21 @@ class Game
     action.start_with?('s') ? :stay : :hit
   end
 
-  def hit_and_display_result
+  def hit_and_show_hand
     player.hit(deck)
-    show_player_hand_and_total
+    player.display_hand_and_total
   end
 
   def dealer_turn
     return if player.busted?
 
     if dealer.total >= 17
-      show_dealer_hand_and_total
+      dealer.display_hand_and_total
       puts "The dealer choses to stay."
       return
     end
 
-    show_dealer_hand_and_total
+    dealer.display_hand_and_total
     puts "Press 'enter' to see dealer's next action."
     gets.chomp
 
@@ -219,18 +223,18 @@ class Game
       dealer.hit(deck)
 
       if dealer.busted?
-        show_dealer_hand_and_total
+        dealer.display_hand_and_total
         puts "The dealer busted! You win!"
         break
       end
 
       if dealer.total >= 17
-        show_dealer_hand_and_total
+        dealer.display_hand_and_total
         puts "The dealer choses to stay."
         break
       end
 
-      show show_dealer_hand_and_total
+      dealer.display_hand_and_total
       puts "Press 'enter' to see dealer's next action."
       gets.chomp
     end
@@ -238,8 +242,8 @@ class Game
 
   def show_result
     puts "RESULTS!"
-    show_player_hand_and_total
-    show_dealer_hand_and_total
+    player.display_hand_and_total
+    dealer.display_hand_and_total
   end
 end
 
