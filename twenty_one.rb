@@ -5,9 +5,6 @@ module Hand
     hand << deck.cards.shift
   end
 
-  # def stay
-  # end
-
   def busted?
     total > 21
   end
@@ -47,6 +44,10 @@ class Participant
   def card_values
     hand.map(&:value)
   end
+
+  def spacer
+    puts
+  end
 end
 
 class Player < Participant
@@ -55,15 +56,17 @@ class Player < Participant
   end
 
   def hit_or_stay
-    puts 'Hit(h) or stay(s)?'
+    puts 'Would you like to: hit(h) or stay(s)?'
 
     action = nil
     loop do
       action = gets.chomp.downcase
       break if %w(h hit s stay).include?(action)
+      spacer
       puts "Sorry that is an invalid answer. Please try again."
     end
 
+    spacer
     action.start_with?('s') ? :stay : :hit
   end
 
@@ -171,6 +174,7 @@ class Game
   end
 
   def start
+    game_banner
     deal_cards
     show_initial_cards
     player_turn
@@ -179,6 +183,12 @@ class Game
   end
 
   private
+
+  def game_banner
+    clear
+    puts "*-*-*-*-*-*-* TWENTY-ONE *-*-*-*-*-*-*"
+    spacer
+  end
 
   def deal_cards
     [player, dealer].each do |participant|
@@ -189,24 +199,44 @@ class Game
   def show_initial_cards
     dealer.display_hand_unknown_and_total
     player.display_hand_and_total
+    2.times { spacer }
   end
 
   def player_turn
     loop do
       break if player.hit_or_stay == :stay
 
+      clear
+      player_turn_banner
       hit_and_display_hand
 
-      if player.busted?
-        puts "You busted! The dealer wins."
-        break
-      end
+      break if player_busts
     end
+  end
+
+  def player_busts
+    return unless player.busted?
+
+    clear
+    results_banner
+    spacer
+
+    player.display_hand_and_total
+    spacer
+    puts "***** You busted! The dealer wins. *****"
+    spacer
+    true
+  end
+
+  def player_turn_banner
+    puts "*-*-*-*-*-*-* PLAYER TURN *-*-*-*-*-*-*"
+    spacer
   end
 
   def hit_and_display_hand
     player.hit(deck)
     player.display_hand_and_total
+    spacer
   end
 
   def dealer_turn
@@ -259,10 +289,15 @@ class Game
   end
 
   def show_result
-    puts "RESULTS!"
+    # clear
+    results_banner
     player.display_hand_and_total
     dealer.display_hand_and_total
     display_winner
+  end
+
+  def results_banner
+    puts "*-*-*-*-*-*-*-* RESULTS *-*-*-*-*-*-*-*"
   end
 
   def display_winner
@@ -271,6 +306,14 @@ class Game
     when 1 then puts "You are the winner!"
     else        puts "Dealer is the winner!"
     end
+  end
+
+  def clear
+    system "clear"
+  end
+
+  def spacer
+    puts
   end
 end
 
