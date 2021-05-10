@@ -67,6 +67,10 @@ class Player < Participant
     action.start_with?('s') ? :stay : :hit
   end
 
+  def >(dealer)
+    total <=> dealer.total
+  end
+
   private
 
   def join_and(names)
@@ -250,18 +254,23 @@ class Game
     return unless dealer.sufficient_hand_total?
 
     dealer.display_hand_and_total
-    dealer_stays_msg
-    true
-  end
-
-  def dealer_stays_msg
     puts "The dealer choses to stay."
+    true
   end
 
   def show_result
     puts "RESULTS!"
     player.display_hand_and_total
     dealer.display_hand_and_total
+    display_winner
+  end
+
+  def display_winner
+    case (player > dealer)
+    when 0 then puts "It's a tie!"
+    when 1 then puts "You are the winner!"
+    else        puts "Dealer is the winner!"
+    end
   end
 end
 
