@@ -6,7 +6,6 @@ module Hand
   end
 
   # def stay
-  #   break
   # end
 
   def busted?
@@ -17,7 +16,6 @@ module Hand
     ace_count = card_values.count(ACE_VALUE)
     total = card_values.sum
 
-    # while !busted?
     while total > 21 && ace_count > 0
       total -= 10
       ace_count -= 1
@@ -37,8 +35,7 @@ class Participant
   end
 
   def <<(cards)
-    hand << cards
-    hand.flatten!
+    (hand << cards).flatten!
   end
 
   private
@@ -54,11 +51,14 @@ end
 
 class Player < Participant
   def display_hand
-    names = card_names
+    join_and(card_names)
+  end
 
-    case names.size
-    when 2 then names.join(' and ')
-    else "#{names[0..-2].join(', ')} and #{names[-1]}"
+  def join_and(names)
+    if names.size == 2
+      names.join(' and ')
+    else
+      "#{names[0..-2].join(', ')} and #{names[-1]}"
     end
   end
 
@@ -69,9 +69,11 @@ end
 
 class Dealer < Participant
   def display_hand(options = { unknown: false })
-    names = card_names
+    join_and(card_names, options[:unknown])
+  end
 
-    if options[:unknown]
+  def join_and(names, unknown)
+    if unknown
       "#{names[0]} and an unknown card"
     else
       "#{names[0..-2].join(', ')} and #{names[-1]}"
@@ -122,7 +124,6 @@ class Card
 
   def initialize(suit, value, name)
     @suit = suit
-    # HOW DOES ACE AFFECT THE VALUE?
     @value = value
     @name = name
   end
@@ -158,7 +159,15 @@ class Game
 
   def show_initial_cards
     puts "Dealer has: #{dealer.display_hand(unknown: true)}."
+    show_player_hand_and_total
+  end
+
+  def show_player_hand_and_total
     puts "You have: #{player.display_hand}. Total: #{player.total}."
+  end
+
+  def show_dealer_hand_and_total
+    puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
   end
 
   def player_turn
@@ -189,19 +198,19 @@ class Game
 
   def hit_and_display_result
     player.hit(deck)
-    puts "You have: #{player.display_hand}. Total: #{player.total}."
+    show_player_hand_and_total
   end
 
   def dealer_turn
     return if player.busted?
 
     if dealer.total >= 17
-      puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+      show_dealer_hand_and_total
       puts "The dealer choses to stay."
       return
     end
 
-    puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+    show_dealer_hand_and_total
     puts "Press 'enter' to see dealer's next action."
     gets.chomp
 
@@ -210,17 +219,18 @@ class Game
       dealer.hit(deck)
 
       if dealer.busted?
+        show_dealer_hand_and_total
         puts "The dealer busted! You win!"
         break
       end
 
       if dealer.total >= 17
-        puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+        show_dealer_hand_and_total
         puts "The dealer choses to stay."
         break
       end
 
-      puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+      show show_dealer_hand_and_total
       puts "Press 'enter' to see dealer's next action."
       gets.chomp
     end
@@ -228,8 +238,8 @@ class Game
 
   def show_result
     puts "RESULTS!"
-    puts "You have: #{player.display_hand}. Total: #{player.total}."
-    puts "Dealer has: #{dealer.display_hand}. Total: #{dealer.total}."
+    show_player_hand_and_total
+    show_dealer_hand_and_total
   end
 end
 
