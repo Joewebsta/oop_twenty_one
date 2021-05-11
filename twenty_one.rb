@@ -56,8 +56,7 @@ class Player < Participant
   end
 
   def hit_or_stay
-    puts "-------------------------------------"
-    puts 'Would you like to: hit(h) or stay(s)?'
+    hit_or_stay_prompt
 
     action = nil
     loop do
@@ -76,6 +75,11 @@ class Player < Participant
   end
 
   private
+
+  def hit_or_stay_prompt
+    puts "-------------------------------------"
+    puts 'Would you like to: hit(h) or stay(s)?'
+  end
 
   def join_and(names)
     if names.size == 2
@@ -99,7 +103,7 @@ class Dealer < Participant
     puts "Dealer has: #{display_hand(unknown: true)}."
   end
 
-  def sufficient_hand_total?
+  def hand_total_at_least_17?
     total >= 17
   end
 
@@ -185,26 +189,10 @@ class Game
 
   private
 
-  def game_banner
-    clear
-    puts "*-*-*-*-*-*-* TWENTY-ONE *-*-*-*-*-*-*"
-    spacer
-  end
-
   def deal_cards
-    # [player, dealer].each do |participant|
-    #   participant << deck.cards.shift(TOP_TWO_CARDS)
-    # end
-    [player].each do |participant|
+    [player, dealer].each do |participant|
       participant << deck.cards.shift(TOP_TWO_CARDS)
     end
-
-    # card1 = Card.new("", 10, "10")
-    # card2 = Card.new("", 9, "9")
-    card1 = Card.new("", 2, "2")
-    card2 = Card.new("", 3, "3")
-    dealer << card1
-    dealer << card2
   end
 
   def show_initial_cards
@@ -213,44 +201,36 @@ class Game
     spacer
   end
 
+  # || PLAYER
+
   def player_turn
     loop do
       if player.hit_or_stay == :stay
-        clear
-        player_turn_banner
-        puts "You stay."
-        spacer
-        player.display_hand_and_total
-        enter_for_dealer_turn
+        player_stays
         break
-      else
-        clear
-        player_turn_banner
-        hit_and_display_hand
       end
 
-      if player.busted?
-        clear
-        player_turn_banner
-        # FIND MESSAGES AND CONSOLIDATE INTO METHODS?
-        puts "You hit!"
-        spacer
+      player_hit_and_display_hand
 
-        player.display_hand_and_total
-        spacer
-        puts "***** You busted! The dealer wins. *****"
-        spacer
+      if player.busted?
+        player_busts
         return
       end
     end
   end
 
-  def player_turn_banner
-    puts "*-*-*-*-*-*-* PLAYER TURN *-*-*-*-*-*-*"
+  def player_stays
+    clear
+    player_turn_banner
+    player_stays_msg
     spacer
+    player.display_hand_and_total
+    enter_to("continue to dealer's turn")
   end
 
-  def hit_and_display_hand
+  def player_hit_and_display_hand
+    clear
+    player_turn_banner
     puts "You hit!"
     spacer
     player.hit(deck)
@@ -258,87 +238,80 @@ class Game
     spacer
   end
 
+  def player_busts
+    puts "***** You busted! The dealer wins. *****"
+    spacer
+  end
+
+  # || DEALER
+
   def dealer_turn
     return if player.busted?
 
-    dealer_turn_banner
-    dealer.display_hand_and_total
+    dealer_turn_header
 
-    if dealer.sufficient_hand_total?
+    if dealer.hand_total_at_least_17?
       spacer
       dealer_stays_msg
-      enter_for_results
+      enter_to("see the game results")
     else
-      enter_for_dealer_action
+      enter_to("see dealer's next action")
       dealer_hits
     end
   end
 
-  def dealer_turn_banner
-    clear
-    puts "*-*-*-*-*-*-* DEALER TURN *-*-*-*-*-*-*"
+  def dealer_turn_header
+    dealer_turn_banner
+    dealer.display_hand_and_total
+  end
+
+  def dealer_hits_header
+    dealer_turn_banner
+    puts "The dealer hits."
     spacer
-  end
-
-  def enter_for_dealer_action
-    puts
-    puts "------------------------------------------"
-    puts "Press 'enter' to see dealer's next action."
-    gets.chomp
-  end
-
-  def enter_for_dealer_turn
-    puts
-    puts "-------------------------------------------"
-    puts "Press 'enter' to continue to dealer's turn."
-    gets.chomp
-  end
-
-  def enter_for_results
-    puts
-    puts "------------------------------------------"
-    puts "Press 'enter' to see the game results."
-    gets.chomp
   end
 
   def dealer_hits
     loop do
-      clear
-      dealer_turn_banner
-
-      puts "The dealer hits."
-      spacer
+      dealer_hits_header
       dealer.hit(deck)
 
       if dealer.busted?
-        dealer.display_hand_and_total
-        spacer
-        # MOVE TO GENERAL RESULTS METHOD
-        puts "***** The dealer busted! You win! *****"
-        spacer
-        break
-      end
-
-      if dealer.sufficient_hand_total?
-        dealer.display_hand_and_total
-        enter_for_dealer_action
-        clear
-        dealer_turn_banner
-        dealer_stays_msg
-        spacer
-        dealer.display_hand_and_total
-        enter_for_results
+        dealer_busts
         break
       end
 
       dealer.display_hand_and_total
-      enter_for_dealer_action
+
+      if dealer.hand_total_at_least_17?
+        enter_to("see dealer's next action")
+        clear
+
+        dealer_stays
+        break
+      end
+
+      enter_to("see dealer's next action")
     end
   end
 
-  def dealer_stays_msg
-    puts "The dealer stays."
+  def dealer_stays
+    dealer_turn_banner
+    dealer_stays_msg
+    spacer
+    dealer.display_hand_and_total
+    enter_to("see the game results")
   end
+
+  def dealer_busts
+    dealer.display_hand_and_total
+    spacer
+    # MOVE TO GENERAL RESULTS METHOD
+    puts "***** The dealer busted! You win! *****"
+    spacer
+  end
+
+  # || RESULTS
 
   def show_result
     results_banner
@@ -346,12 +319,6 @@ class Game
     dealer.display_hand_and_total
     spacer
     display_winner
-  end
-
-  def results_banner
-    clear
-    puts "*-*-*-*-*-*-*-* RESULTS *-*-*-*-*-*-*-*"
-    spacer
   end
 
   def display_winner
@@ -362,6 +329,46 @@ class Game
     end
 
     spacer
+  end
+
+  # || HELPERS
+
+  def player_stays_msg
+    puts "You stay."
+  end
+
+  def dealer_stays_msg
+    puts "The dealer stays."
+  end
+
+  def game_banner
+    clear
+    puts "*-*-*-*-*-*-* TWENTY-ONE *-*-*-*-*-*-*"
+    spacer
+  end
+
+  def player_turn_banner
+    puts "*-*-*-*-*-*-* PLAYER TURN *-*-*-*-*-*-*"
+    spacer
+  end
+
+  def dealer_turn_banner
+    clear
+    puts "*-*-*-*-*-*-* DEALER TURN *-*-*-*-*-*-*"
+    spacer
+  end
+
+  def results_banner
+    clear
+    puts "*-*-*-*-*-*-*-* RESULTS *-*-*-*-*-*-*-*"
+    spacer
+  end
+
+  def enter_to(action)
+    puts
+    puts "------------------------------------------"
+    puts "Press 'enter' to #{action}."
+    gets.chomp
   end
 
   def clear
