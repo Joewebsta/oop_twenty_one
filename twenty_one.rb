@@ -221,20 +221,21 @@ class Game
         player.display_hand_and_total
         enter_for_dealer_turn
         break
-      elsif player.busted?
+      else
+        clear
+        player_turn_banner
+        hit_and_display_hand
+      end
+
+      if player.busted?
         clear
         results_banner
-        spacer
 
         player.display_hand_and_total
         spacer
         puts "***** You busted! The dealer wins. *****"
         spacer
         return
-      else
-        clear
-        player_turn_banner
-        hit_and_display_hand
       end
     end
   end
@@ -246,7 +247,7 @@ class Game
 
   def hit_and_display_hand
     puts "You hit!"
-    # spacer
+    spacer
     player.hit(deck)
     player.display_hand_and_total
     spacer
