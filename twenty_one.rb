@@ -199,8 +199,10 @@ class Game
       participant << deck.cards.shift(TOP_TWO_CARDS)
     end
 
-    card1 = Card.new("", 10, "10")
-    card2 = Card.new("", 9, "9")
+    # card1 = Card.new("", 10, "10")
+    # card2 = Card.new("", 9, "9")
+    card1 = Card.new("", 2, "2")
+    card2 = Card.new("", 3, "3")
     dealer << card1
     dealer << card2
   end
@@ -229,7 +231,10 @@ class Game
 
       if player.busted?
         clear
-        results_banner
+        player_turn_banner
+        # FIND MESSAGES AND CONSOLIDATE INTO METHODS?
+        puts "You hit!"
+        spacer
 
         player.display_hand_and_total
         spacer
@@ -260,6 +265,7 @@ class Game
     dealer.display_hand_and_total
 
     if dealer.sufficient_hand_total?
+      spacer
       dealer_stays_msg
       enter_for_results
     else
@@ -301,11 +307,15 @@ class Game
       dealer_turn_banner
 
       puts "The dealer hits."
+      spacer
       dealer.hit(deck)
 
       if dealer.busted?
         dealer.display_hand_and_total
-        puts "The dealer busted! You win!"
+        spacer
+        # MOVE TO GENERAL RESULTS METHOD
+        puts "***** The dealer busted! You win! *****"
+        spacer
         break
       end
 
@@ -315,7 +325,9 @@ class Game
         clear
         dealer_turn_banner
         dealer_stays_msg
+        spacer
         dealer.display_hand_and_total
+        enter_for_results
         break
       end
 
@@ -325,7 +337,6 @@ class Game
   end
 
   def dealer_stays_msg
-    spacer
     puts "The dealer stays."
   end
 
