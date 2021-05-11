@@ -213,14 +213,15 @@ class Game
 
   def player_turn
     loop do
-      break if player.hit_or_stay == :stay
-
-      clear
-      player_turn_banner
-      hit_and_display_hand
-
-      # Player busts
-      if player.busted?
+      if player.hit_or_stay == :stay
+        clear
+        player_turn_banner
+        puts "You stay."
+        spacer
+        player.display_hand_and_total
+        enter_for_dealer_turn
+        break
+      elsif player.busted?
         clear
         results_banner
         spacer
@@ -230,6 +231,10 @@ class Game
         puts "***** You busted! The dealer wins. *****"
         spacer
         return
+      else
+        clear
+        player_turn_banner
+        hit_and_display_hand
       end
     end
   end
@@ -275,6 +280,13 @@ class Game
     gets.chomp
   end
 
+  def enter_for_dealer_turn
+    puts
+    puts "-------------------------------------------"
+    puts "Press 'enter' to continue to dealer's turn."
+    gets.chomp
+  end
+
   def enter_for_results
     puts
     puts "------------------------------------------"
@@ -298,7 +310,6 @@ class Game
 
       if dealer.sufficient_hand_total?
         dealer.display_hand_and_total
-        # require 'pry'; binding.pry
         enter_for_dealer_action
         clear
         dealer_turn_banner
