@@ -56,6 +56,7 @@ class Player < Participant
   end
 
   def hit_or_stay
+    puts "-------------------------------------"
     puts 'Would you like to: hit(h) or stay(s)?'
 
     action = nil
@@ -191,15 +192,23 @@ class Game
   end
 
   def deal_cards
-    [player, dealer].each do |participant|
+    # [player, dealer].each do |participant|
+    #   participant << deck.cards.shift(TOP_TWO_CARDS)
+    # end
+    [player].each do |participant|
       participant << deck.cards.shift(TOP_TWO_CARDS)
     end
+
+    card1 = Card.new("", 10, "10")
+    card2 = Card.new("", 9, "9")
+    dealer << card1
+    dealer << card2
   end
 
   def show_initial_cards
     dealer.display_hand_unknown_and_total
     player.display_hand_and_total
-    2.times { spacer }
+    spacer
   end
 
   def player_turn
@@ -210,22 +219,19 @@ class Game
       player_turn_banner
       hit_and_display_hand
 
-      break if player_busts
+      # Player busts
+      if player.busted?
+        clear
+        results_banner
+        spacer
+
+        player.display_hand_and_total
+        spacer
+        puts "***** You busted! The dealer wins. *****"
+        spacer
+        return
+      end
     end
-  end
-
-  def player_busts
-    return unless player.busted?
-
-    clear
-    results_banner
-    spacer
-
-    player.display_hand_and_total
-    spacer
-    puts "***** You busted! The dealer wins. *****"
-    spacer
-    true
   end
 
   def player_turn_banner
@@ -234,6 +240,8 @@ class Game
   end
 
   def hit_and_display_hand
+    puts "You hit!"
+    # spacer
     player.hit(deck)
     player.display_hand_and_total
     spacer
@@ -242,70 +250,95 @@ class Game
   def dealer_turn
     return if player.busted?
 
-    if dealer.sufficient_hand_total?
-      dealer.display_hand_and_total
-      dealer_stays_msg
-      return
-    end
-
+    dealer_turn_banner
     dealer.display_hand_and_total
-    enter_for_dealer_action
 
-    dealer_hits
+    if dealer.sufficient_hand_total?
+      dealer_stays_msg
+      enter_for_results
+    else
+      enter_for_dealer_action
+      dealer_hits
+    end
+  end
+
+  def dealer_turn_banner
+    clear
+    puts "*-*-*-*-*-*-* DEALER TURN *-*-*-*-*-*-*"
+    spacer
   end
 
   def enter_for_dealer_action
+    puts
+    puts "------------------------------------------"
     puts "Press 'enter' to see dealer's next action."
+    gets.chomp
+  end
+
+  def enter_for_results
+    puts
+    puts "------------------------------------------"
+    puts "Press 'enter' to see the game results."
     gets.chomp
   end
 
   def dealer_hits
     loop do
-      puts "The dealer choses to hit."
+      clear
+      dealer_turn_banner
+
+      puts "The dealer hits."
       dealer.hit(deck)
 
-      break if dealer_busts
-      break if dealer_stays
+      if dealer.busted?
+        dealer.display_hand_and_total
+        puts "The dealer busted! You win!"
+        break
+      end
+
+      if dealer.sufficient_hand_total?
+        dealer.display_hand_and_total
+        # require 'pry'; binding.pry
+        enter_for_dealer_action
+        clear
+        dealer_turn_banner
+        dealer_stays_msg
+        dealer.display_hand_and_total
+        break
+      end
 
       dealer.display_hand_and_total
       enter_for_dealer_action
     end
   end
 
-  def dealer_busts
-    return unless dealer.busted?
-
-    dealer.display_hand_and_total
-    puts "The dealer busted! You win!"
-    true
-  end
-
-  def dealer_stays
-    return unless dealer.sufficient_hand_total?
-
-    dealer.display_hand_and_total
-    puts "The dealer choses to stay."
-    true
+  def dealer_stays_msg
+    spacer
+    puts "The dealer stays."
   end
 
   def show_result
-    # clear
     results_banner
     player.display_hand_and_total
     dealer.display_hand_and_total
+    spacer
     display_winner
   end
 
   def results_banner
+    clear
     puts "*-*-*-*-*-*-*-* RESULTS *-*-*-*-*-*-*-*"
+    spacer
   end
 
   def display_winner
     case (player > dealer)
-    when 0 then puts "It's a tie!"
-    when 1 then puts "You are the winner!"
-    else        puts "Dealer is the winner!"
+    when 0 then puts "***** It's a tie! *****"
+    when 1 then puts "***** You are the winner! *****"
+    else        puts "***** Dealer is the winner! *****"
     end
+
+    spacer
   end
 
   def clear
