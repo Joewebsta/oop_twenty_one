@@ -185,7 +185,8 @@ class Game
   def start
     loop do
       main_game
-      break if play_again?
+      break unless play_again?
+      reset
     end
 
     goodbye_msg
@@ -205,7 +206,7 @@ class Game
       spacer
     end
 
-    answer.start_with?('n')
+    answer.start_with?('y')
   end
 
   def play_again_prompt
@@ -232,6 +233,12 @@ class Game
     dealer.display_hand_unknown_and_total
     player.display_hand_and_total
     spacer
+  end
+
+  def reset
+    @deck = Deck.new
+    @player.hand = []
+    @dealer.hand = []
   end
 
   # || PLAYER
