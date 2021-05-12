@@ -1,19 +1,20 @@
 module Hand
   ACE_VALUE = 11
+  MAX_TOTAL = 21
 
   def hit(deck)
     hand << deck.cards.shift
   end
 
   def busted?
-    total > 21
+    total > MAX_TOTAL
   end
 
   def total
     ace_count = card_values.count(ACE_VALUE)
     total = card_values.sum
 
-    while total > 21 && ace_count > 0
+    while total > MAX_TOTAL && ace_count > 0
       total -= 10
       ace_count -= 1
     end
@@ -91,6 +92,8 @@ class Player < Participant
 end
 
 class Dealer < Participant
+  MIN_HAND_TOTAL = 17
+
   def display_hand(options = { unknown: false })
     join_and(card_names, options[:unknown])
   end
@@ -103,8 +106,8 @@ class Dealer < Participant
     puts "Dealer has: #{display_hand(unknown: true)}."
   end
 
-  def hand_total_at_least_17?
-    total >= 17
+  def sufficient_hand_total?
+    total >= MIN_HAND_TOTAL
   end
 
   private
@@ -239,7 +242,7 @@ class Game
   end
 
   def player_busts
-    puts "***** You busted! The dealer wins. *****"
+    display_winner
     spacer
   end
 
@@ -250,7 +253,7 @@ class Game
 
     dealer_turn_header
 
-    if dealer.hand_total_at_least_17?
+    if dealer.sufficient_hand_total?
       spacer
       dealer_stays_msg
       enter_to("see the game results")
@@ -283,7 +286,7 @@ class Game
 
       dealer.display_hand_and_total
 
-      if dealer.hand_total_at_least_17?
+      if dealer.sufficient_hand_total?
         enter_to("see dealer's next action")
         clear
 
@@ -306,8 +309,7 @@ class Game
   def dealer_busts
     dealer.display_hand_and_total
     spacer
-    # MOVE TO GENERAL RESULTS METHOD
-    puts "***** The dealer busted! You win! *****"
+    display_winner
     spacer
   end
 
@@ -322,6 +324,11 @@ class Game
   end
 
   def display_winner
+    puts "***** You busted! The dealer wins. *****" if player.busted?
+    puts "***** The dealer busted! You win! *****" if dealer.busted?
+
+    return if player.busted? || dealer.busted?
+
     case (player > dealer)
     when 0 then puts "***** It's a tie! *****"
     when 1 then puts "***** You are the winner! *****"
