@@ -182,6 +182,37 @@ class Game
   end
 
   def start
+    loop do
+      main_game
+      break if play_again?
+    end
+
+    goodbye_msg
+  end
+
+  private
+
+  def play_again?
+    answer = nil
+    loop do
+      play_again_prompt
+      answer = gets.chomp
+      break if %w(y yes no n).include?(answer.downcase)
+
+      spacer
+      puts "Sorry that is an invalid answer. Please try again."
+      spacer
+    end
+
+    answer.start_with?('n')
+  end
+
+  def play_again_prompt
+    puts "------------------------------------------"
+    puts "Would you like to play again? ('y' or 'n')"
+  end
+
+  def main_game
     game_banner
     deal_cards
     show_initial_cards
@@ -189,8 +220,6 @@ class Game
     dealer_turn
     show_result unless dealer.busted? || player.busted?
   end
-
-  private
 
   def deal_cards
     [player, dealer].each do |participant|
@@ -346,6 +375,12 @@ class Game
 
   def dealer_stays_msg
     puts "The dealer stays."
+  end
+
+  def goodbye_msg
+    spacer
+    puts "Thank you for playing Twenty-One. Goodbye!"
+    spacer
   end
 
   def game_banner
