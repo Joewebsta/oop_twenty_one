@@ -79,7 +79,7 @@ class Player < Participant
 
   def hit_or_stay_prompt
     puts "-------------------------------------"
-    puts 'Would you like to: hit(h) or stay(s)?'
+    puts 'Would you like to: (h)it or (s)tay?'
   end
 
   def join_and(names)
