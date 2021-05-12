@@ -122,8 +122,6 @@ class Dealer < Participant
 end
 
 class Deck
-  SUITS = %w(Spades Hearts Diamonds Clubs)
-
   attr_reader :cards
 
   def initialize
@@ -131,16 +129,29 @@ class Deck
   end
 
   def create_deck
-    SUITS.each_with_object([]) do |suit, cards|
-      (2..14).each do |num|
-        cards << Card.new(suit, value(num), name(num))
+    Card::SUITS.each_with_object([]) do |suit, cards|
+      Card::VALUES.each do |num|
+        cards << Card.new(suit, num)
       end
     end
+  end
+end
+
+class Card
+  SUITS = %w(Spades Hearts Diamonds Clubs)
+  VALUES = (2..14).to_a
+
+  attr_reader :name, :value
+
+  def initialize(suit, num)
+    @suit = suit
+    @value = card_value(num)
+    @name = card_name(num)
   end
 
   private
 
-  def name(num)
+  def card_name(num)
     case num
     when 2..10 then num
     when 11 then 'Jack'
@@ -150,22 +161,12 @@ class Deck
     end
   end
 
-  def value(num)
+  def card_value(num)
     case num
     when 2..10 then num
     when 11..13 then 10
     else 11
     end
-  end
-end
-
-class Card
-  attr_reader :name, :value
-
-  def initialize(suit, value, name)
-    @suit = suit
-    @value = value
-    @name = name
   end
 end
 
@@ -208,8 +209,8 @@ class Game
   end
 
   def play_again_prompt
-    puts "------------------------------------------"
-    puts "Would you like to play again? ('y' or 'n')"
+    puts "------------------------------------"
+    puts "Would you like to play again? (y/n)."
   end
 
   def main_game
