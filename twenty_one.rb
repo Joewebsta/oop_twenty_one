@@ -36,7 +36,17 @@ class Participant
     (hand << cards).flatten!
   end
 
+  def display_hand_and_total
+    name = self.class == Player ? "You have" : "Dealer has"
+
+    puts "#{name}: #{display_hand}. Total: #{total}."
+  end
+
   private
+
+  def display_hand(options = { unknown: false })
+    join_and(card_names, options[:unknown])
+  end
 
   def card_names
     hand.map(&:name)
@@ -46,22 +56,28 @@ class Participant
     hand.map(&:value)
   end
 
+  def join_and(names, unknown_card)
+    if unknown_card
+      "#{names[0]} and an unknown card"
+    elsif names.size == 2
+      names.join(' and ')
+    else
+      "#{names[0..-2].join(', ')} and #{names[-1]}"
+    end
+  end
+
   def spacer
     puts
   end
 end
 
 class Player < Participant
-  def display_hand_and_total
-    puts "You have: #{join_and(card_names)}. Total: #{total}."
-  end
-
   def hit_or_stay
     hit_or_stay_prompt
 
     action = nil
     loop do
-      action = gets.chomp.downcase
+      action = gets.chomp.strip.downcase
       break if %w(h hit s stay).include?(action)
       spacer
       puts "Sorry that is an invalid answer. Please try again."
@@ -81,26 +97,10 @@ class Player < Participant
     puts "-------------------------------------"
     puts 'Would you like to: (h)it or (s)tay?'
   end
-
-  def join_and(names)
-    if names.size == 2
-      names.join(' and ')
-    else
-      "#{names[0..-2].join(', ')} and #{names[-1]}"
-    end
-  end
 end
 
 class Dealer < Participant
   MIN_HAND_TOTAL = 17
-
-  def display_hand(options = { unknown: false })
-    join_and(card_names, options[:unknown])
-  end
-
-  def display_hand_and_total
-    puts "Dealer has: #{display_hand}. Total: #{total}."
-  end
 
   def display_hand_unknown_and_total
     puts "Dealer has: #{display_hand(unknown: true)}."
@@ -108,16 +108,6 @@ class Dealer < Participant
 
   def sufficient_hand_total?
     total >= MIN_HAND_TOTAL
-  end
-
-  private
-
-  def join_and(names, unknown_card)
-    if unknown_card
-      "#{names[0]} and an unknown card"
-    else
-      "#{names[0..-2].join(', ')} and #{names[-1]}"
-    end
   end
 end
 
@@ -198,8 +188,8 @@ class Game
     answer = nil
     loop do
       play_again_prompt
-      answer = gets.chomp
-      break if %w(y yes no n).include?(answer.downcase)
+      answer = gets.chomp.downcase
+      break if %w(y yes no n).include?(answer)
 
       spacer
       puts "Sorry that is an invalid answer. Please try again."
