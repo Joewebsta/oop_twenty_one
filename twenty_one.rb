@@ -41,7 +41,7 @@ module Hand
 end
 
 class Participant
-  include Hand
+  include Hand, Formatting
 
   attr_accessor :hand
 
@@ -88,20 +88,18 @@ class Participant
 end
 
 class Player < Participant
-  include Formatting
-
   def turn(deck)
     loop do
       if hit_or_stay == :stay
-        player_stays
+        stay
         break
       end
 
       # I DO NOT LIKE PASSING DECK TO METHOD
-      player_hit_and_display_hand(deck)
+      hit_and_display_hand(deck)
 
       if busted?
-        player_busts
+        busts
         return
       end
     end
@@ -128,18 +126,18 @@ class Player < Participant
     action.start_with?('s') ? :stay : :hit
   end
 
-  def player_stays
+  def stay
     clear
-    player_turn_banner
-    player_stays_msg
+    turn_banner
+    stay_msg
     spacer
     display_hand_and_total
     enter_to("continue to dealer's turn")
   end
 
-  def player_hit_and_display_hand(deck)
+  def hit_and_display_hand(deck)
     clear
-    player_turn_banner
+    turn_banner
     puts "You hit!"
     spacer
     hit(deck)
@@ -147,7 +145,7 @@ class Player < Participant
     spacer
   end
 
-  def player_busts
+  def busts
     puts "***** You busted! The dealer wins. *****" if busted?
 
     spacer
@@ -158,12 +156,12 @@ class Player < Participant
     puts 'Would you like to: (h)it or (s)tay?'
   end
 
-  def player_turn_banner
+  def turn_banner
     puts "*-*-*-*-*-*-* PLAYER TURN *-*-*-*-*-*-*"
     spacer
   end
 
-  def player_stays_msg
+  def stay_msg
     puts "You stay."
   end
 end
@@ -173,6 +171,79 @@ class Dealer < Participant
 
   def display_hand_unknown_and_total
     puts "Dealer has: #{display_hand(unknown: true)}."
+  end
+
+  def turn(deck)
+    turn_header
+
+    if sufficient_hand_total?
+      spacer
+      stay_msg
+      enter_to("see the game results")
+    else
+      enter_to("see dealer's next action")
+      dealer_hits(deck)
+    end
+  end
+
+  def turn_header
+    turn_banner
+    display_hand_and_total
+  end
+
+  def hits_header
+    turn_banner
+    puts "The dealer hits."
+    spacer
+  end
+
+  def dealer_hits(deck)
+    loop do
+      hits_header
+      hit(deck)
+
+      if busted?
+        busts
+        break
+      end
+
+      display_hand_and_total
+
+      if sufficient_hand_total?
+        enter_to("see dealer's next action")
+        clear
+
+        stay
+        break
+      end
+
+      enter_to("see dealer's next action")
+    end
+  end
+
+  def stay
+    turn_banner
+    stay_msg
+    spacer
+    display_hand_and_total
+    enter_to("see the game results")
+  end
+
+  def busts
+    display_hand_and_total
+    spacer
+    puts "***** The dealer busted! You win! *****" if busted?
+    spacer
+  end
+
+  def turn_banner
+    clear
+    puts "*-*-*-*-*-*-* DEALER TURN *-*-*-*-*-*-*"
+    spacer
+  end
+
+  def stay_msg
+    puts "The dealer stays."
   end
 
   def sufficient_hand_total?
@@ -280,7 +351,10 @@ class Game
     deal_cards
     show_initial_cards
     player.turn(deck)
-    dealer_turn
+
+    return if player.busted?
+
+    dealer.turn(deck)
     show_result unless dealer.busted? || player.busted?
   end
 
@@ -302,73 +376,6 @@ class Game
     @dealer.hand = []
   end
 
-  # || DEALER
-
-  def dealer_turn
-    return if player.busted?
-
-    dealer_turn_header
-
-    if dealer.sufficient_hand_total?
-      spacer
-      dealer_stays_msg
-      enter_to("see the game results")
-    else
-      enter_to("see dealer's next action")
-      dealer_hits
-    end
-  end
-
-  def dealer_turn_header
-    dealer_turn_banner
-    dealer.display_hand_and_total
-  end
-
-  def dealer_hits_header
-    dealer_turn_banner
-    puts "The dealer hits."
-    spacer
-  end
-
-  def dealer_hits
-    loop do
-      dealer_hits_header
-      dealer.hit(deck)
-
-      if dealer.busted?
-        dealer_busts
-        break
-      end
-
-      dealer.display_hand_and_total
-
-      if dealer.sufficient_hand_total?
-        enter_to("see dealer's next action")
-        clear
-
-        dealer_stays
-        break
-      end
-
-      enter_to("see dealer's next action")
-    end
-  end
-
-  def dealer_stays
-    dealer_turn_banner
-    dealer_stays_msg
-    spacer
-    dealer.display_hand_and_total
-    enter_to("see the game results")
-  end
-
-  def dealer_busts
-    dealer.display_hand_and_total
-    spacer
-    display_winner
-    spacer
-  end
-
   # || RESULTS
 
   def show_result
@@ -380,8 +387,6 @@ class Game
   end
 
   def display_winner
-    puts "***** The dealer busted! You win! *****" if dealer.busted?
-
     return if player.busted? || dealer.busted?
 
     case (player > dealer)
@@ -395,10 +400,6 @@ class Game
 
   # || HELPERS
 
-  def dealer_stays_msg
-    puts "The dealer stays."
-  end
-
   def goodbye_msg
     spacer
     puts "Thank you for playing Twenty-One. Goodbye!"
@@ -408,12 +409,6 @@ class Game
   def game_banner
     clear
     puts "*-*-*-*-*-*-* TWENTY-ONE *-*-*-*-*-*-*"
-    spacer
-  end
-
-  def dealer_turn_banner
-    clear
-    puts "*-*-*-*-*-*-* DEALER TURN *-*-*-*-*-*-*"
     spacer
   end
 
