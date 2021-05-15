@@ -1,3 +1,20 @@
+module Formatting
+  def clear
+    system "clear"
+  end
+
+  def spacer
+    puts
+  end
+
+  def enter_to(action)
+    puts
+    puts "------------------------------------------"
+    puts "Press 'enter' to #{action}."
+    gets.chomp
+  end
+end
+
 module Hand
   ACE_VALUE = 11
   MAX_TOTAL = 21
@@ -38,7 +55,6 @@ class Participant
 
   def display_hand_and_total
     name = self.class == Player ? "You have" : "Dealer has"
-
     puts "#{name}: #{display_hand}. Total: #{total}."
   end
 
@@ -72,6 +88,31 @@ class Participant
 end
 
 class Player < Participant
+  include Formatting
+
+  def turn(deck)
+    loop do
+      if hit_or_stay == :stay
+        player_stays
+        break
+      end
+
+      # I DO NOT LIKE PASSING DECK TO METHOD
+      player_hit_and_display_hand(deck)
+
+      if busted?
+        player_busts
+        return
+      end
+    end
+  end
+
+  def >(dealer)
+    total <=> dealer.total
+  end
+
+  private
+
   def hit_or_stay
     hit_or_stay_prompt
 
@@ -87,15 +128,43 @@ class Player < Participant
     action.start_with?('s') ? :stay : :hit
   end
 
-  def >(dealer)
-    total <=> dealer.total
+  def player_stays
+    clear
+    player_turn_banner
+    player_stays_msg
+    spacer
+    display_hand_and_total
+    enter_to("continue to dealer's turn")
   end
 
-  private
+  def player_hit_and_display_hand(deck)
+    clear
+    player_turn_banner
+    puts "You hit!"
+    spacer
+    hit(deck)
+    display_hand_and_total
+    spacer
+  end
+
+  def player_busts
+    puts "***** You busted! The dealer wins. *****" if busted?
+
+    spacer
+  end
 
   def hit_or_stay_prompt
     puts "-------------------------------------"
     puts 'Would you like to: (h)it or (s)tay?'
+  end
+
+  def player_turn_banner
+    puts "*-*-*-*-*-*-* PLAYER TURN *-*-*-*-*-*-*"
+    spacer
+  end
+
+  def player_stays_msg
+    puts "You stay."
   end
 end
 
@@ -161,6 +230,8 @@ class Card
 end
 
 class Game
+  include Formatting
+
   TOP_TWO_CARDS = 2
 
   attr_accessor :player, :dealer
@@ -208,7 +279,7 @@ class Game
     game_banner
     deal_cards
     show_initial_cards
-    player_turn
+    player.turn(deck)
     dealer_turn
     show_result unless dealer.busted? || player.busted?
   end
@@ -229,48 +300,6 @@ class Game
     @deck = Deck.new
     @player.hand = []
     @dealer.hand = []
-  end
-
-  # || PLAYER
-
-  def player_turn
-    loop do
-      if player.hit_or_stay == :stay
-        player_stays
-        break
-      end
-
-      player_hit_and_display_hand
-
-      if player.busted?
-        player_busts
-        return
-      end
-    end
-  end
-
-  def player_stays
-    clear
-    player_turn_banner
-    player_stays_msg
-    spacer
-    player.display_hand_and_total
-    enter_to("continue to dealer's turn")
-  end
-
-  def player_hit_and_display_hand
-    clear
-    player_turn_banner
-    puts "You hit!"
-    spacer
-    player.hit(deck)
-    player.display_hand_and_total
-    spacer
-  end
-
-  def player_busts
-    display_winner
-    spacer
   end
 
   # || DEALER
@@ -351,7 +380,6 @@ class Game
   end
 
   def display_winner
-    puts "***** You busted! The dealer wins. *****" if player.busted?
     puts "***** The dealer busted! You win! *****" if dealer.busted?
 
     return if player.busted? || dealer.busted?
@@ -366,10 +394,6 @@ class Game
   end
 
   # || HELPERS
-
-  def player_stays_msg
-    puts "You stay."
-  end
 
   def dealer_stays_msg
     puts "The dealer stays."
@@ -387,11 +411,6 @@ class Game
     spacer
   end
 
-  def player_turn_banner
-    puts "*-*-*-*-*-*-* PLAYER TURN *-*-*-*-*-*-*"
-    spacer
-  end
-
   def dealer_turn_banner
     clear
     puts "*-*-*-*-*-*-* DEALER TURN *-*-*-*-*-*-*"
@@ -402,21 +421,6 @@ class Game
     clear
     puts "*-*-*-*-*-*-*-* RESULTS *-*-*-*-*-*-*-*"
     spacer
-  end
-
-  def enter_to(action)
-    puts
-    puts "------------------------------------------"
-    puts "Press 'enter' to #{action}."
-    gets.chomp
-  end
-
-  def clear
-    system "clear"
-  end
-
-  def spacer
-    puts
   end
 end
 
