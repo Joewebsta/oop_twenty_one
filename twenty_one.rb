@@ -174,6 +174,23 @@ class Dealer < Participant
   end
 
   def turn(deck)
+    loop do
+      if hit_or_stay == :hit
+        hit(deck)
+      else
+        stay
+        break
+      end
+
+
+    end
+
+    def hit_or_stay
+      if sufficient_hand_total?
+        :stay
+    end
+
+
     turn_header
 
     if sufficient_hand_total?
