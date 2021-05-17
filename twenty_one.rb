@@ -19,8 +19,16 @@ module Hand
   ACE_VALUE = 11
   MAX_TOTAL = 21
 
-  def hit(deck)
+  def add_card(deck)
     hand << deck.cards.shift
+  end
+
+  def card_names
+    hand.map(&:name)
+  end
+
+  def card_values
+    hand.map(&:value)
   end
 
   def busted?
@@ -53,6 +61,18 @@ class Participant
     (hand << cards).flatten!
   end
 
+  def turn(deck)
+    loop do
+      if hit_or_stay == :hit
+        hit(deck)
+        break busts if busted?
+      else
+        stay
+        break
+      end
+    end
+  end
+
   def display_hand_and_total
     name = self.class == Player ? "You have" : "Dealer has"
     puts "#{name}: #{display_hand}. Total: #{total}."
@@ -64,14 +84,6 @@ class Participant
     join_and(card_names, options[:unknown])
   end
 
-  def card_names
-    hand.map(&:name)
-  end
-
-  def card_values
-    hand.map(&:value)
-  end
-
   def join_and(names, unknown_card)
     if unknown_card
       "#{names[0]} and an unknown card"
@@ -81,30 +93,9 @@ class Participant
       "#{names[0..-2].join(', ')} and #{names[-1]}"
     end
   end
-
-  def spacer
-    puts
-  end
 end
 
 class Player < Participant
-  def turn(deck)
-    loop do
-      if hit_or_stay == :stay
-        stay
-        break
-      end
-
-      # I DO NOT LIKE PASSING DECK TO METHOD
-      hit_and_display_hand(deck)
-
-      if busted?
-        busts
-        return
-      end
-    end
-  end
-
   def >(dealer)
     total <=> dealer.total
   end
@@ -126,6 +117,16 @@ class Player < Participant
     action.start_with?('s') ? :stay : :hit
   end
 
+  def hit(deck)
+    clear
+    turn_banner
+    puts "You hit!"
+    spacer
+    add_card(deck)
+    display_hand_and_total
+    spacer
+  end
+
   def stay
     clear
     turn_banner
@@ -135,19 +136,8 @@ class Player < Participant
     enter_to("continue to dealer's turn")
   end
 
-  def hit_and_display_hand(deck)
-    clear
-    turn_banner
-    puts "You hit!"
-    spacer
-    hit(deck)
-    display_hand_and_total
-    spacer
-  end
-
   def busts
     puts "***** You busted! The dealer wins. *****" if busted?
-
     spacer
   end
 
@@ -173,35 +163,33 @@ class Dealer < Participant
     puts "Dealer has: #{display_hand(unknown: true)}."
   end
 
-  def turn(deck)
-    loop do
-      if hit_or_stay == :hit
-        hit(deck)
-      else
-        stay
-        break
-      end
+  # def turn(deck)
+  #   loop do
+  #     if hit_or_stay == :hit
+  #       hit(deck)
+  #       require 'pry'; binding.pry
+  #       break # puts "busted!" if busted?
+  #     else
+  #       stay
+  #       break
+  #     end
+  #   end
+  # def hit_or_stay
+  #   if sufficient_hand_total?
+  #     :stay
+  # end
 
+  # turn_header
 
-    end
-
-    def hit_or_stay
-      if sufficient_hand_total?
-        :stay
-    end
-
-
-    turn_header
-
-    if sufficient_hand_total?
-      spacer
-      stay_msg
-      enter_to("see the game results")
-    else
-      enter_to("see dealer's next action")
-      dealer_hits(deck)
-    end
-  end
+  # if sufficient_hand_total?
+  #   spacer
+  #   stay_msg
+  #   enter_to("see the game results")
+  # else
+  #   enter_to("see dealer's next action")
+  #   dealer_hits(deck)
+  # end
+  # end
 
   def turn_header
     turn_banner
