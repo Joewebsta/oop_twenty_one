@@ -13,6 +13,16 @@ module Formatting
     puts "Press 'enter' to #{action}."
     gets.chomp
   end
+
+  def join_and(names, unknown_card)
+    if unknown_card
+      "#{names[0]} and an unknown card"
+    elsif names.size == 2
+      names.join(' and ')
+    else
+      "#{names[0..-2].join(', ')} and #{names[-1]}"
+    end
+  end
 end
 
 module Hand
@@ -65,7 +75,7 @@ class Participant
     loop do
       if hit_or_stay == :hit
         hit(deck)
-        break busts if busted?
+        break bust if busted?
       else
         stay
         break
@@ -82,16 +92,6 @@ class Participant
 
   def display_hand(options = { unknown: false })
     join_and(card_names, options[:unknown])
-  end
-
-  def join_and(names, unknown_card)
-    if unknown_card
-      "#{names[0]} and an unknown card"
-    elsif names.size == 2
-      names.join(' and ')
-    else
-      "#{names[0..-2].join(', ')} and #{names[-1]}"
-    end
   end
 end
 
@@ -136,7 +136,7 @@ class Player < Participant
     enter_to("continue to dealer's turn")
   end
 
-  def busts
+  def bust
     puts "***** You busted! The dealer wins. *****" if busted?
     spacer
   end
@@ -159,71 +159,34 @@ end
 class Dealer < Participant
   MIN_HAND_TOTAL = 17
 
+  def hit_or_stay
+    sufficient_hand_total? ? :stay : :hit
+  end
+
   def display_hand_unknown_and_total
     puts "Dealer has: #{display_hand(unknown: true)}."
   end
 
-  # def turn(deck)
-  #   loop do
-  #     if hit_or_stay == :hit
-  #       hit(deck)
-  #       require 'pry'; binding.pry
-  #       break # puts "busted!" if busted?
-  #     else
-  #       stay
-  #       break
-  #     end
-  #   end
-  # def hit_or_stay
-  #   if sufficient_hand_total?
-  #     :stay
-  # end
-
-  # turn_header
-
-  # if sufficient_hand_total?
-  #   spacer
-  #   stay_msg
-  #   enter_to("see the game results")
-  # else
-  #   enter_to("see dealer's next action")
-  #   dealer_hits(deck)
-  # end
-  # end
-
-  def turn_header
-    turn_banner
+  def hit(deck)
+    hits_header
+    add_card(deck)
     display_hand_and_total
+
+    return if busted?
+
+    if sufficient_hand_total?
+      enter_to("see dealer's next action")
+      clear
+      return
+    end
+
+    enter_to("see dealer's next action")
   end
 
   def hits_header
     turn_banner
     puts "The dealer hits."
     spacer
-  end
-
-  def dealer_hits(deck)
-    loop do
-      hits_header
-      hit(deck)
-
-      if busted?
-        busts
-        break
-      end
-
-      display_hand_and_total
-
-      if sufficient_hand_total?
-        enter_to("see dealer's next action")
-        clear
-
-        stay
-        break
-      end
-
-      enter_to("see dealer's next action")
-    end
   end
 
   def stay
@@ -234,7 +197,8 @@ class Dealer < Participant
     enter_to("see the game results")
   end
 
-  def busts
+  def bust
+    hits_header
     display_hand_and_total
     spacer
     puts "***** The dealer busted! You win! *****" if busted?
