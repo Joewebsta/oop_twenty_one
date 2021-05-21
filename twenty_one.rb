@@ -174,13 +174,8 @@ class Dealer < Participant
 
     return if busted?
 
-    if sufficient_hand_total?
-      enter_to("see dealer's next action")
-      clear
-      return
-    end
-
     enter_to("see dealer's next action")
+    clear if sufficient_hand_total?
   end
 
   def hits_header
